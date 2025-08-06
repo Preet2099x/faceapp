@@ -25,6 +25,11 @@ latest_coords = {
     "timestamp": 0
 }
 
+# Track if face registration is in progress
+registration_in_progress = False
+# Track if face verification is in progress
+verification_in_progress = False
+
 # ✅ Root route to confirm server is running
 @app.route("/")
 def index():
@@ -161,7 +166,16 @@ def delete_user(user_id):
 
 @app.route('/run_register_face', methods=['GET'])
 def run_register_face():
+    global registration_in_progress
+    
+    # Check if registration is already in progress
+    if registration_in_progress:
+        return jsonify({'error': 'Face registration is already in progress. Please wait for it to complete.'}), 409
+    
     try:
+        # Set flag to indicate registration is in progress
+        registration_in_progress = True
+        
         # Correct path to register_face.py in the same directory
         script_path = os.path.join(os.path.dirname(__file__), 'register_face.py')
         
@@ -174,28 +188,49 @@ def run_register_face():
             return jsonify({'error': 'Script failed', 'details': result.stderr}), 500
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        # Always reset the flag when done
+        registration_in_progress = False
 
-@app.route("/users", methods=["GET"])
-def get_users():
-    users = list(mongo.db.faces.find())
-    for user in users:
-        user["_id"] = str(user["_id"])
-    return jsonify(users), 200
+@app.route('/reset_registration', methods=['POST'])
+def reset_registration():
+    global registration_in_progress
+    registration_in_progress = False
+    return jsonify({'message': 'Registration flag reset successfully'}), 200
 
-@app.route("/users/<user_id>", methods=["PUT"])
-def update_user(user_id):
-    data = request.get_json()
-    result = mongo.db.faces.update_one({"_id": ObjectId(user_id)}, {"$set": data})
-    if result.modified_count:
-        return jsonify({"message": "User updated"}), 200
-    return jsonify({"error": "User not found or data unchanged"}), 404
+@app.route('/run_verify_face', methods=['GET'])
+def run_verify_face():
+    global verification_in_progress
+    
+    # Check if verification is already in progress
+    if verification_in_progress:
+        return jsonify({'error': 'Face verification is already in progress. Please wait for it to complete.'}), 409
+    
+    try:
+        # Set flag to indicate verification is in progress
+        verification_in_progress = True
+        
+        # Correct path to verify_face.py in the same directory
+        script_path = os.path.join(os.path.dirname(__file__), 'verify_face.py')
+        
+        # Run the Python script
+        result = subprocess.run(['python', script_path], capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            return jsonify({'message': 'verify_face.py ran successfully', 'output': result.stdout}), 200
+        else:
+            return jsonify({'error': 'Script failed', 'details': result.stderr}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        # Always reset the flag when done
+        verification_in_progress = False
 
-@app.route("/users/<user_id>", methods=["DELETE"])
-def delete_user(user_id):
-    result = mongo.db.faces.delete_one({"_id": ObjectId(user_id)})
-    if result.deleted_count:
-        return jsonify({"message": "User deleted"}), 200
-    return jsonify({"error": "User not found"}), 404
+@app.route('/reset_verification', methods=['POST'])
+def reset_verification():
+    global verification_in_progress
+    verification_in_progress = False
+    return jsonify({'message': 'Verification flag reset successfully'}), 200
 
 
 if __name__ == "__main__":
