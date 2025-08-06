@@ -150,20 +150,5 @@ def register_new_user():
             frontend_url_with_params = FRONTEND_URL + query_params
             webbrowser.open(frontend_url_with_params)
 
-app.route('/run_register_face', methods=['GET'])
-def run_register_face():
-    try:
-        script_path = os.path.join(os.path.dirname(__file__), 'register_face.py')
-
-        result = subprocess.run(['python', script_path], capture_output=True, text=True)
-
-        if result.returncode == 0:
-            return jsonify({ 'message': 'Script ran successfully', 'output': result.stdout }), 200
-        else:
-            return jsonify({ 'error': 'Script failed', 'details': result.stderr }), 500
-
-    except Exception as e:
-        return jsonify({ 'error': str(e) }), 500
-
 if __name__ == "__main__":
     register_new_user()
