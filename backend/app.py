@@ -6,6 +6,8 @@ from flask_pymongo import PyMongo
 from flask_cors import CORS
 from bson.objectid import ObjectId # Required to handle MongoDB IDs
 from bson.errors import InvalidId
+import subprocess
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -156,6 +158,22 @@ def delete_user(user_id):
         return jsonify({"error": "User not found."}), 404
 
     return jsonify({"message": f"User {user_id} deleted successfully."}), 200
+
+@app.route('/run_register_face', methods=['GET'])
+def run_register_face():
+    try:
+        # Adjust path if needed, make sure register_face.py exists here
+        script_path = os.path.join(os.path.dirname(__file__), 'backend', 'register_face.py')
+        
+        # Run the Python script
+        result = subprocess.run(['python', script_path], capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            return jsonify({'message': 'register_face.py ran successfully', 'output': result.stdout}), 200
+        else:
+            return jsonify({'error': 'Script failed', 'details': result.stderr}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-# File: register_user.py
+# File: register_face.py
 import cv2
 import os
 import json
