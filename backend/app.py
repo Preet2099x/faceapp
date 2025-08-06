@@ -162,8 +162,8 @@ def delete_user(user_id):
 @app.route('/run_register_face', methods=['GET'])
 def run_register_face():
     try:
-        # Adjust path if needed, make sure register_face.py exists here
-        script_path = os.path.join(os.path.dirname(__file__), 'backend', 'register_face.py')
+        # Correct path to register_face.py in the same directory
+        script_path = os.path.join(os.path.dirname(__file__), 'register_face.py')
         
         # Run the Python script
         result = subprocess.run(['python', script_path], capture_output=True, text=True)
