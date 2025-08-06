@@ -175,6 +175,28 @@ def run_register_face():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route("/users", methods=["GET"])
+def get_users():
+    users = list(mongo.db.faces.find())
+    for user in users:
+        user["_id"] = str(user["_id"])
+    return jsonify(users), 200
+
+@app.route("/users/<user_id>", methods=["PUT"])
+def update_user(user_id):
+    data = request.get_json()
+    result = mongo.db.faces.update_one({"_id": ObjectId(user_id)}, {"$set": data})
+    if result.modified_count:
+        return jsonify({"message": "User updated"}), 200
+    return jsonify({"error": "User not found or data unchanged"}), 404
+
+@app.route("/users/<user_id>", methods=["DELETE"])
+def delete_user(user_id):
+    result = mongo.db.faces.delete_one({"_id": ObjectId(user_id)})
+    if result.deleted_count:
+        return jsonify({"message": "User deleted"}), 200
+    return jsonify({"error": "User not found"}), 404
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
